@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      https://gist.github.com/talmuth/e3abd629add49c0afd4f/raw/jiraFixes.user.js
-// @version        0.1.2
+// @version        0.1.3
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // ==/UserScript==
 
@@ -30,7 +30,7 @@
       }
     } else if ($('#customfield_10014-val .user-hover').attr('rel') == $user.data('username')) {
       if ($('#customfield_11511-val.value').text().trim() == 'Requested') {
-        $('<li class="toolbar-item"><a class="toolbar-trigger review-status-trigger" href="#" data-status="Approved">Approve<a></li>'
+        $('<li class="toolbar-item"><a class="toolbar-trigger review-status-trigger" href="#" data-status="Approved">Approve<a></li>' +
          '<li class="toolbar-item"><a class="toolbar-trigger review-status-trigger" href="#" data-status="Denied">Deny<a></li>').appendTo('#opsbar-opsbar-transitions');
       }
     }
