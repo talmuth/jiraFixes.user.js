@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      https://gist.github.com/talmuth/e3abd629add49c0afd4f/raw/jiraFixes.user.js
-// @version        0.1.3
+// @version        0.2.0
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // ==/UserScript==
 
@@ -45,5 +45,9 @@
       })
       .done(function(){location.reload();});
     });
+  }
+
+  if (window.location.href.match(/RapidBoard\.jspa\?rapidView=228/)) {
+    $('body').addClass('BPA-RapidBoard');
   }
 })();
