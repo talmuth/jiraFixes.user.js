@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      https://gist.github.com/talmuth/e3abd629add49c0afd4f/raw/jiraFixes.user.js
-// @version        0.3.0
+// @version        0.4.0
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // ==/UserScript==
@@ -30,7 +30,7 @@
     $(this).prop('href', 'https://int.odesk.com/obo/zendesk-request/' + $(this).prop('href').split('tickets/')[1]).prop('target', '_blank');
   });
 
-  if ($('#status-val.value img[alt="In Progress"]').length) {
+  if ($('#status-val.value img[alt="In Progress"]').length && $('#customfield_10014-val').length) {
     var $user = $('#header-details-user-fullname');
 
     if ($('#assignee-val .user-hover').attr('rel') == $user.data('username')) {
@@ -45,12 +45,26 @@
     }
 
     $('#opsbar-opsbar-transitions .review-status-trigger').click(function() {
+      var $reviewer = $('#customfield_10014-val'),
+          issue =  $('#key-val').data('issue-key');
+      if ($reviewer.length) {
+        var reviewerId = $reviewer.find('.user-hover').attr('rel');
+        if ($('#customfield_11135-field .tinylink > .user-hover[rel=' + reviewerId + ']').length === 0) {
+          $.ajax({
+            type: 'POST',
+            url: '/rest/api/2/issue/' + issue + '/watchers',
+            contentType: 'application/json',
+            data: JSON.stringify(reviewerId)
+          });
+        }
+      }
+
       $.ajax({
         type: 'PUT',
-        url: '/rest/api/2/issue/' + $('#key-val').data('issue-key'),
+        url: '/rest/api/2/issue/' + issue,
         dataType: 'json',
         contentType: 'application/json',
-        data: JSON.stringify({"fields": {"customfield_11511": {"value": $(this).data('status')}}}),
+        data: JSON.stringify({"fields": {"customfield_11511": {"value": $(this).data('status')}}})
       })
       .done(function(){location.reload();});
     });
