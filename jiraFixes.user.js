@@ -4,18 +4,18 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      https://gist.github.com/talmuth/e3abd629add49c0afd4f/raw/jiraFixes.user.js
-// @version        0.2.0
+// @version        0.2.1
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
+// @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // ==/UserScript==
 
 (function(){
-  var makeFakeParentClickable = function(node) {
+  waitForKeyElements('#ghx-work .ghx-parent-group.js-fake-parent', function(node) {
     var issue = $(node).data('issue-key'), $key = $(node).find('.ghx-group .ghx-key'); $key.text('');
 
     $('<a href="/browse/' + issue + '" title="' + issue + '" class="ghx-key-link js-detailview">' + issue + '</a>').appendTo($key);
     $key.find('a').click(GH.WorkSelectionController.handleIssueClick);
-  };
-  waitForKeyElements('#ghx-work .ghx-parent-group.js-fake-parent', makeFakeParentClickable);
+  });
 
   $('a[href^="https://support.odesk.com/tickets/"]:not(.marked)').each(function() {
     $(this).prop('href', 'https://int.odesk.com/obo/zendesk-request/' + $(this).prop('href').split('tickets/')[1]).prop('target', '_blank');
@@ -47,7 +47,7 @@
     });
   }
 
-  if (window.location.href.match(/RapidBoard\.jspa\?rapidView=228/)) {
+  if (window.location.href.match(/(?:RapidBoard\.jspa\?rapidView=(?:228|238)|Dashboard\.jspa\?selectPageId=10810|ifr\?container=atlassian\&mid=12631)/)) {
     $('body').addClass('BPA-RapidBoard');
   }
 })();
