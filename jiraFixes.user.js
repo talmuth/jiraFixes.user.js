@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      https://gist.github.com/talmuth/e3abd629add49c0afd4f/raw/jiraFixes.user.js
-// @version        0.2.2
+// @version        0.3.0
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // ==/UserScript==
@@ -17,7 +17,16 @@
     $key.find('a').click(GH.WorkSelectionController.handleIssueClick);
   });
 
-  $('a[href^="https://support.odesk.com/tickets/"]:not(.marked)').each(function() {
+  waitForKeyElements('#ghx-detail-issue', function(node) {
+    var $epic = $(node).find('.ghx-fieldname-customfield_10911 .js-epic-remove');
+    if ($epic.length) {
+      $epic.empty().css({paddingRight: '3px'});
+      var issue = $epic.data('epickey');
+      $('<a href="/browse/' + issue + '" target="_blank" title="' + issue + '" class="ghx-key-link js-detailview">' + $epic.prop('title') + '</a>').appendTo($epic);
+    }
+  });
+
+  $('a[href^="https://support.odesk.com/tickets/"]').each(function() {
     $(this).prop('href', 'https://int.odesk.com/obo/zendesk-request/' + $(this).prop('href').split('tickets/')[1]).prop('target', '_blank');
   });
 
