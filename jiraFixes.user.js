@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      https://gist.github.com/talmuth/e3abd629add49c0afd4f/raw/jiraFixes.user.js
-// @version        0.4.0
+// @version        0.5.0
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // ==/UserScript==
@@ -23,6 +23,48 @@
       $epic.empty().css({paddingRight: '3px'});
       var issue = $epic.data('epickey');
       $('<a href="/browse/' + issue + '" target="_blank" title="' + issue + '" class="ghx-key-link js-detailview">' + $epic.prop('title') + '</a>').appendTo($epic);
+    }
+  });
+
+  waitForKeyElements('.BPA-RapidBoard #ghx-pool .ghx-swimlane', function(node) {
+    var $issues = $(node).find('.ghx-issue'), issues = $issues.map(function() { return $(this).data('issue-key'); });
+    if ($issues.length > 0) {
+      $.ajax({
+        type: 'GET',
+        url: '/rest/api/2/search?jql=key+in(' + issues.toArray().join(',') + ')&fields=timetracking,customfield_10910&maxResults=1000',
+        contentType: 'application/json'
+      })
+      .done(function(data) {
+        var epics = [];
+        data.issues.forEach(function(issue) {
+          $issue = $issues.filter('[data-issue-key="' + issue.key + '"]');
+          $('<div style="position:absolute;right:38px;top:6px;" class="bpa-badges">' +
+              '<span class="aui-badge" title="Remaining Time Estimate" style="background:#ccc;">' +
+                 (issue.fields.timetracking.remainingEstimate || "0") + '</span></div>'
+          ).appendTo($issue);
+          if (issue.fields.customfield_10910) {
+            epics.push(issue.fields.customfield_10910);
+            $issue.attr('data-epic-key', issue.fields.customfield_10910);
+          }
+        });
+        if (epics.length) {
+          $.ajax({
+            type: 'GET',
+            url: '/rest/api/2/search?jql=key+in(' + epics.join(',') + ')&fields=customfield_10911,customfield_10913&maxResults=1000',
+            contentType: 'application/json'
+          })
+          .done(function(data) {
+            data.issues.forEach(function(issue) {
+              $badges = $issues.filter('[data-epic-key="' + issue.key + '"]').find('.bpa-badges');
+              $('<a href="/browse/' + issue.key + '" target="_blank" title="' + issue.key + '" ' +
+                    'data-issue-key="' + issue.key + '" ' +
+                    'style="background-color:' + issue.fields.customfield_10913 + ';text-transform:none;margin-right:3px;" ' +
+                    'class="aui-badge ghx-key-link">' + issue.fields.customfield_10911 + '</a>'
+               ).prependTo($badges);
+            });
+          });
+        }
+      });
     }
   });
 
