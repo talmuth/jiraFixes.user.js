@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      https://gist.github.com/talmuth/e3abd629add49c0afd4f/raw/jiraFixes.user.js
-// @version        0.5.0
+// @version        0.5.1
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // ==/UserScript==
@@ -39,8 +39,8 @@
         data.issues.forEach(function(issue) {
           $issue = $issues.filter('[data-issue-key="' + issue.key + '"]');
           $('<div style="position:absolute;right:38px;top:6px;" class="bpa-badges">' +
-              '<span class="aui-badge" title="Remaining Time Estimate" style="background:#ccc;">' +
-                 (issue.fields.timetracking.remainingEstimate || "0") + '</span></div>'
+              '<span class="aui-badge" title="Remaining Time Estimate" style="background:#' + (issue.fields.timetracking.remainingEstimate ? 'ccc' : 'eb00e3') + '">' +
+                 (issue.fields.timetracking.remainingEstimate || "?") + '</span></div>'
           ).appendTo($issue);
           if (issue.fields.customfield_10910) {
             epics.push(issue.fields.customfield_10910);
@@ -57,9 +57,8 @@
             data.issues.forEach(function(issue) {
               $badges = $issues.filter('[data-epic-key="' + issue.key + '"]').find('.bpa-badges');
               $('<a href="/browse/' + issue.key + '" target="_blank" title="' + issue.key + '" ' +
-                    'data-issue-key="' + issue.key + '" ' +
                     'style="background-color:' + issue.fields.customfield_10913 + ';text-transform:none;margin-right:3px;" ' +
-                    'class="aui-badge ghx-key-link">' + issue.fields.customfield_10911 + '</a>'
+                    'class="aui-badge">' + issue.fields.customfield_10911 + '</a>'
                ).prependTo($badges);
             });
           });
