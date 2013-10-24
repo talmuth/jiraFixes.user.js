@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      https://gist.github.com/talmuth/e3abd629add49c0afd4f/raw/jiraFixes.user.js
-// @version        0.5.1
+// @version        0.6.0
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // ==/UserScript==
@@ -42,6 +42,13 @@
               '<span class="aui-badge" title="Remaining Time Estimate" style="background:#' + (issue.fields.timetracking.remainingEstimate ? 'ccc' : 'eb00e3') + '">' +
                  (issue.fields.timetracking.remainingEstimate || "?") + '</span></div>'
           ).appendTo($issue);
+
+          if (issue.fields.timetracking.remainingEstimateSeconds) {
+             var days = Math.round(issue.fields.timetracking.remainingEstimateSeconds / 7200);
+             $issue.attr('class', $issue.attr('class').replace(/ghx-days-\d+/, 'ghx-days-' + (days <= 32 ? days : '32')));
+             $issue.find('.ghx-days').attr('title', 'Remaining estimate in hours').addClass('display-anyway');
+          }
+
           if (issue.fields.customfield_10910) {
             epics.push(issue.fields.customfield_10910);
             $issue.attr('data-epic-key', issue.fields.customfield_10910);
@@ -55,11 +62,14 @@
           })
           .done(function(data) {
             data.issues.forEach(function(issue) {
-              $badges = $issues.filter('[data-epic-key="' + issue.key + '"]').find('.bpa-badges');
+              var $issue  = $issues.filter('[data-epic-key="' + issue.key + '"]');
+
+              $issue.find('.ghx-summary').addClass('aui-label').css({backgroundColor: issue.fields.customfield_10913, top: '-2px !important'});
+
               $('<a href="/browse/' + issue.key + '" target="_blank" title="' + issue.key + '" ' +
                     'style="background-color:' + issue.fields.customfield_10913 + ';text-transform:none;margin-right:3px;" ' +
                     'class="aui-badge">' + issue.fields.customfield_10911 + '</a>'
-               ).prependTo($badges);
+               ).prependTo($issue.find('.bpa-badges'));
             });
           });
         }
