@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks
-// @version        0.6.4
+// @version        0.7.0
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // ==/UserScript==
@@ -12,6 +12,62 @@
 (function() {
     /* global waitForKeyElements */
     /* global GH */
+
+    GH.SwimlaneView.renderEstimates = function(swimlaneId) {
+        var $swimlane = $("#ghx-pool").find('.ghx-swimlane[swimlane-id="' + swimlaneId + '"]'),
+            $issues = $swimlane.find('.ghx-issue'),
+            days;
+        console.log('swimlane', swimlaneId);
+        console.log('issues', GH.SwimlaneView.AG[swimlaneId].issues);
+        GH.SwimlaneView.AG[swimlaneId].issues.forEach(function(issue) {
+            var $issue = $issues.filter('[data-issue-key="' + issue.key + '"]');
+
+            $('<div style="position:absolute;right:38px;top:6px;" class="bpa-badges">' +
+                '<span class="aui-badge" title="Remaining Time Estimate" style="background:#' + (issue.fields.timetracking.remainingEstimate ? 'ccc' : 'eb00e3') + '">' +
+                (issue.fields.timetracking.remainingEstimate || "?") + '</span></div>').appendTo($issue);
+
+            if (issue.fields.timetracking.remainingEstimateSeconds) {
+                days = Math.round(issue.fields.timetracking.remainingEstimateSeconds / 7200);
+                $issue.attr('class', $issue.attr('class').replace(/ghx-days-\d+/, 'ghx-days-' + (days <= 32 ? days : '32')));
+                $issue.find('.ghx-days').attr('title', 'Remaining estimate in hours').addClass('display-anyway');
+            }
+
+            if (issue.fields.customfield_10910) {
+                $issue.attr('data-epic-key', issue.fields.customfield_10910);
+            }
+        });
+    };
+
+    GH.SwimlaneView.renderEpicInfo = function(swimlaneId) {
+        var $swimlane = $("#ghx-pool").find('.ghx-swimlane[swimlane-id="' + swimlaneId + '"]'),
+            $issues = $swimlane.find('.ghx-issue');
+        console.log('swimlane', swimlaneId);
+        console.log('issues', GH.SwimlaneView.AG[swimlaneId].epics);
+        GH.SwimlaneView.AG[swimlaneId].epics.forEach(function(issue) {
+            var $issue = $issues.filter('[data-epic-key="' + issue.key + '"]');
+
+            $issue.find('.ghx-summary').addClass('aui-label').css({
+                backgroundColor: issue.fields.customfield_10913,
+                top: '-2px !important'
+            });
+
+            $('<a href="/browse/' + issue.key + '" target="_blank" title="' + issue.key + '" ' +
+                'style="background-color:' + issue.fields.customfield_10913 + ';text-transform:none;margin-right:3px;" ' +
+                'class="aui-badge">' + issue.fields.customfield_10911 + '</a>').prependTo($issue.find('.bpa-badges'));
+        });
+    };
+
+    GH.SwimlaneView._rerenderCell = GH.SwimlaneView.rerenderCell;
+
+    GH.SwimlaneView.rerenderCell = function(E, G) {
+        GH.SwimlaneView._rerenderCell(E, G);
+
+        GH.SwimlaneView.renderEstimates(E);
+        GH.SwimlaneView.renderEpicInfo(E);
+    };
+
+    GH.SwimlaneView.AG = {};
+
     waitForKeyElements('#ghx-work .ghx-parent-group.js-fake-parent', function(node) {
         var issue = $(node).data('issue-key'),
             $key = $(node).find('.ghx-group .ghx-key');
@@ -22,21 +78,29 @@
     });
 
     waitForKeyElements('#ghx-detail-issue', function(node) {
-        var $epic = $(node).find('.ghx-fieldname-customfield_10911 .js-epic-remove');
+        var $epic = $(node).find('.ghx-fieldname-customfield_10911 .js-epic-remove'),
+            issue;
         if ($epic.length) {
             $epic.empty().css({
                 paddingRight: '3px'
             });
-            var issue = $epic.data('epickey');
+            issue = $epic.data('epickey');
             $('<a href="/browse/' + issue + '" target="_blank" title="' + issue + '" class="ghx-key-link js-detailview">' + $epic.prop('title') + '</a>').appendTo($epic);
         }
     });
 
     waitForKeyElements('.BPA-RapidBoard #ghx-pool .ghx-swimlane', function(node) {
-        var $issues = $(node).find('.ghx-issue'),
+        var $node = $(node),
+            $issues = $node.find('.ghx-issue'),
             issues = $issues.map(function() {
                 return $(this).data('issue-key');
-            });
+            }),
+            swimlaneId = $node.attr('swimlane-id');
+
+        GH.SwimlaneView.AG[swimlaneId] = {};
+        GH.SwimlaneView.AG[swimlaneId].issues = [];
+        GH.SwimlaneView.AG[swimlaneId].epics = [];
+
         if ($issues.length > 0) {
             $.ajax({
                 type: 'GET',
@@ -44,24 +108,18 @@
                 contentType: 'application/json'
             })
                 .done(function(data) {
-                var epics = [];
-                data.issues.forEach(function(issue) {
-                    var $issue = $issues.filter('[data-issue-key="' + issue.key + '"]');
-                    $('<div style="position:absolute;right:38px;top:6px;" class="bpa-badges">' +
-                        '<span class="aui-badge" title="Remaining Time Estimate" style="background:#' + (issue.fields.timetracking.remainingEstimate ? 'ccc' : 'eb00e3') + '">' +
-                        (issue.fields.timetracking.remainingEstimate || "?") + '</span></div>').appendTo($issue);
-
-                    if (issue.fields.timetracking.remainingEstimateSeconds) {
-                        var days = Math.round(issue.fields.timetracking.remainingEstimateSeconds / 7200);
-                        $issue.attr('class', $issue.attr('class').replace(/ghx-days-\d+/, 'ghx-days-' + (days <= 32 ? days : '32')));
-                        $issue.find('.ghx-days').attr('title', 'Remaining estimate in hours').addClass('display-anyway');
-                    }
-
-                    if (issue.fields.customfield_10910) {
-                        epics.push(issue.fields.customfield_10910);
-                        $issue.attr('data-epic-key', issue.fields.customfield_10910);
-                    }
+                var epics = data.issues
+                    .filter(function(issue) {
+                    return issue.fields.customfield_10910;
+                })
+                    .map(function(issue) {
+                    return issue.fields.customfield_10910;
                 });
+
+
+                GH.SwimlaneView.AG[swimlaneId].issues = data.issues;
+                GH.SwimlaneView.renderEstimates(swimlaneId);
+
                 if (epics.length) {
                     $.ajax({
                         type: 'GET',
@@ -69,18 +127,8 @@
                         contentType: 'application/json'
                     })
                         .done(function(data) {
-                        data.issues.forEach(function(issue) {
-                            var $issue = $issues.filter('[data-epic-key="' + issue.key + '"]');
-
-                            $issue.find('.ghx-summary').addClass('aui-label').css({
-                                backgroundColor: issue.fields.customfield_10913,
-                                top: '-2px !important'
-                            });
-
-                            $('<a href="/browse/' + issue.key + '" target="_blank" title="' + issue.key + '" ' +
-                                'style="background-color:' + issue.fields.customfield_10913 + ';text-transform:none;margin-right:3px;" ' +
-                                'class="aui-badge">' + issue.fields.customfield_10911 + '</a>').prependTo($issue.find('.bpa-badges'));
-                        });
+                        GH.SwimlaneView.AG[swimlaneId].epics = data.issues;
+                        GH.SwimlaneView.renderEpicInfo(swimlaneId);
                     });
                 }
             });
