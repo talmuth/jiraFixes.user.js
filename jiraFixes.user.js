@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks
-// @version        0.7.2
+// @version        0.7.3
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // ==/UserScript==
@@ -32,6 +32,8 @@
                 days = Math.round(issue.fields.timetracking.remainingEstimateSeconds / 7200);
                 $issue.attr('class', $issue.attr('class').replace(/ghx-days-\d+/, 'ghx-days-' + (days <= 32 ? days : '32')));
                 $issue.find('.ghx-days').attr('title', 'Remaining estimate in hours').addClass('display-anyway');
+
+                total += issue.fields.timetracking.remainingEstimateSeconds;
             }
 
             if (issue.fields.customfield_10910) {
@@ -43,9 +45,7 @@
             }
         });
 
-        if ($.inArray(swimlaneId, [603, 561])) {
-            $swimlane.find('.ghx-heading .ghx-info').append($('<span class="ghx-description" style="margin-left:.3em;"/>').text('/ ' + (total / 3600 / 8) + ' days'));
-        }
+        $swimlane.find('.ghx-heading .ghx-info').append($('<span class="ghx-description" style="margin-left:.3em;"/>').text('/ ' + (total / 3600 / 8) + ' days'));
     };
 
     GH.SwimlaneView.renderEpicInfo = function(swimlaneId) {
