@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks
-// @version        0.7.3
+// @version        0.7.4
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // ==/UserScript==
@@ -38,10 +38,6 @@
 
             if (issue.fields.customfield_10910) {
                 $issue.attr('data-epic-key', issue.fields.customfield_10910);
-            }
-
-            if ($.inArray(swimlaneId, [603, 561])) {
-                total += issue.fields.timetracking.remainingEstimateSeconds;
             }
         });
 
