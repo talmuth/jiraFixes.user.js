@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks
-// @version        0.7.1
+// @version        0.7.2
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // ==/UserScript==
@@ -19,9 +19,8 @@
     GH.SwimlaneView.renderEstimates = function(swimlaneId) {
         var $swimlane = $("#ghx-pool").find('.ghx-swimlane[swimlane-id="' + swimlaneId + '"]'),
             $issues = $swimlane.find('.ghx-issue'),
-            days;
-        console.log('swimlane', swimlaneId);
-        console.log('issues', GH.SwimlaneView.AG[swimlaneId].issues);
+            days, total = 0;
+
         GH.SwimlaneView.AG[swimlaneId].issues.forEach(function(issue) {
             var $issue = $issues.filter('[data-issue-key="' + issue.key + '"]');
 
@@ -38,14 +37,21 @@
             if (issue.fields.customfield_10910) {
                 $issue.attr('data-epic-key', issue.fields.customfield_10910);
             }
+
+            if ($.inArray(swimlaneId, [603, 561])) {
+                total += issue.fields.timetracking.remainingEstimateSeconds;
+            }
         });
+
+        if ($.inArray(swimlaneId, [603, 561])) {
+            $swimlane.find('.ghx-heading .ghx-info').append($('<span class="ghx-description" style="margin-left:.3em;"/>').text('/ ' + (total / 3600 / 8) + ' days'));
+        }
     };
 
     GH.SwimlaneView.renderEpicInfo = function(swimlaneId) {
         var $swimlane = $("#ghx-pool").find('.ghx-swimlane[swimlane-id="' + swimlaneId + '"]'),
             $issues = $swimlane.find('.ghx-issue');
-        console.log('swimlane', swimlaneId);
-        console.log('issues', GH.SwimlaneView.AG[swimlaneId].epics);
+
         GH.SwimlaneView.AG[swimlaneId].epics.forEach(function(issue) {
             var $issue = $issues.filter('[data-epic-key="' + issue.key + '"]');
 
