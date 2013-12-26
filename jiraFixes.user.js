@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks
-// @version        0.7.4
+// @version        0.8.1
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // ==/UserScript==
@@ -194,5 +194,6 @@
 
     if (window.location.href.match(/(?:RapidBoard\.jspa\?rapidView=(?:228|238)|Dashboard\.jspa\?selectPageId=10810|ifr\?container=atlassian\&mid=12631)/)) {
         $('body').addClass('BPA-RapidBoard');
+        $('#ghx-modes').append($('<a href="#" class="aui-button js-refresh-now">Refresh</a>').click(GH.RapidBoard.reload));
     }
 })();
