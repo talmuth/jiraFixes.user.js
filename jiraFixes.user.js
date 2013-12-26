@@ -19,6 +19,8 @@
     GH.SwimlaneView.renderEstimates = function(swimlaneId) {
         var $swimlane = $("#ghx-pool").find('.ghx-swimlane[swimlane-id="' + swimlaneId + '"]'),
             $issues = $swimlane.find('.ghx-issue'),
+            $header = $swimlane.find('.ghx-heading .ghx-info'),
+            $days = $header.find('.js-days-info'),
             days, total = 0;
 
         GH.SwimlaneView.AG[swimlaneId].issues.forEach(function(issue) {
@@ -41,7 +43,10 @@
             }
         });
 
-        $swimlane.find('.ghx-heading .ghx-info').append($('<span class="ghx-description" style="margin-left:.3em;"/>').text('/ ' + (total / 3600 / 8) + ' days'));
+        if ($days.length == 0) {
+            $days = $('<span class="ghx-description js-days-info" style="margin-left:.3em;"/>').appendTo($header);
+        }
+        $days.text('/ ' + (total / 3600 / 8) + ' days');
     };
 
     GH.SwimlaneView.renderEpicInfo = function(swimlaneId) {
