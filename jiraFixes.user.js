@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks
-// @version        0.8.2
+// @version        0.8.3
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // ==/UserScript==
@@ -24,7 +24,8 @@
             days, total = 0;
 
         GH.SwimlaneView.AG[swimlaneId].issues.forEach(function(issue) {
-            var $issue = $issues.filter('[data-issue-key="' + issue.key + '"]'), daysClass;
+            var $issue = $issues.filter('[data-issue-key="' + issue.key + '"]');
+            if ($issue.length === 0) return;
 
             $('<div style="position:absolute;right:38px;top:6px;" class="bpa-badges">' +
                 '<span class="aui-badge" title="Remaining Time Estimate" style="background:#' + (issue.fields.timetracking.remainingEstimate ? 'ccc' : 'eb00e3') + '">' +
@@ -32,12 +33,7 @@
 
             if (issue.fields.timetracking.remainingEstimateSeconds) {
                 days = Math.round(issue.fields.timetracking.remainingEstimateSeconds / 7200);
-                daysClass = 'ghx-days-' + (days <= 32 ? days : '32');
-                if ($issue.attr('class')) {
-                    $issue.attr('class', $issue.attr('class').replace(/ghx-days-\d+/, daysClass));
-                }  else {
-                    $issue.class(daysClass);
-                }
+                $issue.attr('class', $issue.attr('class').replace(/ghx-days-\d+/, 'ghx-days-' + (days <= 32 ? days : '32')));
                 $issue.find('.ghx-days').attr('title', 'Remaining estimate in hours').addClass('display-anyway');
 
                 total += issue.fields.timetracking.remainingEstimateSeconds;
