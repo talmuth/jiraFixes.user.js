@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks
-// @version        0.8.3
+// @version        0.9.0
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // ==/UserScript==
@@ -12,6 +12,7 @@
 (function() {
     /* global waitForKeyElements */
     /* global GH */
+    /* global AJS */
 
     GH = GH || {};
     GH.SwimlaneView = GH.SwimlaneView || {};
@@ -201,5 +202,17 @@
     if (window.location.href.match(/(?:RapidBoard\.jspa\?rapidView=(?:228|238)|Dashboard\.jspa\?selectPageId=10810|ifr\?container=atlassian\&mid=12631)/)) {
         $('body').addClass('BPA-RapidBoard');
         $('#ghx-modes').append($('<a href="#" class="aui-button js-refresh-now">Refresh</a>').click(GH.RapidBoard.reload));
+        if (AJS.keys) {
+            AJS.keys.shortcuts.push({
+                "moduleKey": "greenhopper-ashboard-refresh",
+                "keys": [
+                    ["r"]
+                ],
+                "context": "greenhopper",
+                "op": "execute",
+                "param": "GH.RapidBoard.reload();"
+            });
+            AJS.activeShortcuts = AJS.whenIType.fromJSON(AJS.keys.shortcuts);
+         }
     }
 })();
