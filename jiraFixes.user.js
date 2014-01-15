@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks
-// @version        0.9.0
+// @version        0.9.1
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // ==/UserScript==
@@ -34,7 +34,7 @@
 
             if (issue.fields.timetracking.remainingEstimateSeconds) {
                 days = Math.round(issue.fields.timetracking.remainingEstimateSeconds / 7200);
-                $issue.attr('class', $issue.attr('class').replace(/ghx-days-\d+/, 'ghx-days-' + (days <= 32 ? days : '32')));
+                $issue.attr('class', $issue.attr('class').replace(/ghx-days-\d+/, 'ghx-days-' + (days <= 32 ? days === 0 ? 1 : days : '32')));
                 $issue.find('.ghx-days').attr('title', 'Remaining estimate in hours').addClass('display-anyway');
 
                 total += issue.fields.timetracking.remainingEstimateSeconds;
