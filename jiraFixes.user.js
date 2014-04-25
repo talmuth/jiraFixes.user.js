@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks
-// @version        0.9.2
+// @version        0.9.3
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // ==/UserScript==
@@ -213,6 +213,11 @@
                 "param": "GH.RapidBoard.reload();"
             });
             AJS.activeShortcuts = AJS.whenIType.fromJSON(AJS.keys.shortcuts);
-         }
+        }
     }
+    
+    waitForKeyElements('.livestamp[datetime]', function(element) {
+        var $element = $(element);
+        $element.closest('span.date').prop('title', $element.attr('datetime'));
+    });
 })();
