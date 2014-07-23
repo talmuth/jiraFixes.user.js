@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks
-// @version        0.9.3
+// @version        0.9.4
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // ==/UserScript==
@@ -14,6 +14,13 @@
     /* global GH */
     /* global AJS */
 
+    GH.formatHours = function(seconds) {
+        var d = seconds / 3600 / 8,
+            h = Math.round(8 * (d - Math.floor(d)));
+
+        return Math.floor(d) + ' days' + (h > 0 ? ' ' + h + ' hours':'');
+    };
+
     GH = GH || {};
     GH.SwimlaneView = GH.SwimlaneView || {};
 
@@ -22,7 +29,7 @@
             $issues = $swimlane.find('.ghx-issue'),
             $header = $swimlane.find('.ghx-heading .ghx-info'),
             $days = $header.find('.js-days-info'),
-            days, total = 0;
+            days, total = 0, flagged = 0;
 
         GH.SwimlaneView.AG[swimlaneId].issues.forEach(function(issue) {
             var $issue = $issues.filter('[data-issue-key="' + issue.key + '"]');
@@ -38,6 +45,10 @@
                 $issue.find('.ghx-days').attr('title', 'Remaining estimate in hours').addClass('display-anyway');
 
                 total += issue.fields.timetracking.remainingEstimateSeconds;
+
+                if (issue.fields.customfield_10000) {
+                    flagged += issue.fields.timetracking.remainingEstimateSeconds;
+                }
             }
 
             if (issue.fields.customfield_10910) {
@@ -48,7 +59,12 @@
         if ($days.length === 0) {
             $days = $('<span class="ghx-description js-days-info" style="margin-left:.3em;"/>').appendTo($header);
         }
-        $days.text('/ ' + (total / 3600 / 8) + ' days');
+
+        var text = '/ ' + GH.formatHours(total);
+        if (flagged > 0) {
+            text += ' (flagged: ' + GH.formatHours(flagged) + ')';
+        }
+        $days.text(text);
     };
 
     GH.SwimlaneView.renderEpicInfo = function(swimlaneId) {
@@ -116,15 +132,15 @@
         if ($issues.length > 0) {
             $.ajax({
                 type: 'GET',
-                url: '/rest/api/2/search?jql=key+in(' + issues.toArray().join(',') + ')&fields=timetracking,customfield_10910&maxResults=1000',
+                url: '/rest/api/2/search?jql=key+in(' + issues.toArray().join(',') + ')&fields=timetracking,customfield_10000,customfield_10910&maxResults=1000',
                 contentType: 'application/json'
             })
-                .done(function(data) {
+            .done(function(data) {
                 var epics = data.issues
                     .filter(function(issue) {
                     return issue.fields.customfield_10910;
                 })
-                    .map(function(issue) {
+                .map(function(issue) {
                     return issue.fields.customfield_10910;
                 });
 
@@ -138,7 +154,7 @@
                         url: '/rest/api/2/search?jql=key+in(' + epics.join(',') + ')&fields=customfield_10911,customfield_10913&maxResults=1000',
                         contentType: 'application/json'
                     })
-                        .done(function(data) {
+                    .done(function(data) {
                         GH.SwimlaneView.AG[swimlaneId].epics = data.issues;
                         GH.SwimlaneView.renderEpicInfo(swimlaneId);
                     });
@@ -193,7 +209,7 @@
                     }
                 })
             })
-                .done(function() {
+            .done(function() {
                 location.reload();
             });
         });
@@ -215,7 +231,7 @@
             AJS.activeShortcuts = AJS.whenIType.fromJSON(AJS.keys.shortcuts);
         }
     }
-    
+
     waitForKeyElements('.livestamp[datetime]', function(element) {
         var $element = $(element);
         $element.closest('span.date').prop('title', $element.attr('datetime'));
