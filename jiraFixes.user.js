@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name           Some minor fixes for JIRA
-// @namespace      https://gist.github.com/talmuth/e3abd629add49c0afd4f
+// @namespace      https://github.com/talmuth/jiraFixes.user.js
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
-// @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks
-// @version        0.9.5
+// @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks-v2
+// @version        0.9.6
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // ==/UserScript==
