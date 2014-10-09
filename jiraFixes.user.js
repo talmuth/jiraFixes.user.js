@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks-v2
-// @version        0.9.6
+// @version        0.9.7
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // ==/UserScript==
@@ -167,7 +167,7 @@
         $(this).prop('href', 'https://int.odesk.com/obo/zendesk-request/' + $(this).prop('href').split('tickets/')[1]).prop('target', '_blank');
     });
 
-    if ($('#status-val.value img[alt="In Progress"]').length && $('#customfield_10014-val').length) {
+    if ($('#status-val.value').text().trim() == 'In Progress' && $('#customfield_10014-val').length) {
         var $user = $('#header-details-user-fullname');
 
         if ($('#assignee-val .user-hover').attr('rel') == $user.data('username')) {
