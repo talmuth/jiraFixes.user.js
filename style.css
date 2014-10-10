@@ -1,0 +1,115 @@
+.collapsed-link, .collapsed-links-list {
+  display: block !important;
+}
+
+#show-more-links {
+  display: none !important;
+}
+
+#edit-issue-dialog .description, #issue-edit .description,
+#create-issue-dialog .description, #issue-create .description,
+#workflow-transition-2-dialog .description,
+#workflow-transition-5-dialog .description,
+.what-ever
+{
+  display: none !important;
+}
+
+.qf-field {
+  padding: 0 !important;
+}
+
+.tabwrap>.tabs.horizontal>li>a {
+  padding: 4px 7px 3px !important;
+}
+
+#assign-to-me-trigger {
+  display: inline-block !important;
+  margin-left: 10px !important;
+}
+
+#ghx-controls-work {
+  min-height: 30% !important;
+}
+
+#js-work-quickfilters dd, #js-work-quickfilters dt {
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 75% !important;
+}
+
+#js-work-quickfilters {
+  min-height: 20px !important;
+}
+
+#js-work-quickfilters a {
+  padding: 2px !important;
+}
+
+.BPA-RapidBoard .ghx-issue {
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.BPA-RapidBoard .ghx-issue .ghx-issue-content {
+  min-height: 10px !important;
+}
+
+.BPA-RapidBoard .ghx-issue, .BPA-RapidBoard .ghx-issue .ghx-grabber {
+  height: 36px !important;
+}
+
+.BPA-RapidBoard .ghx-issue .ghx-days {
+  display: none !important;
+}
+
+.BPA-RapidBoard .ghx-issue .ghx-days.display-anyway {
+  display: block !important;
+}
+
+.BPA-RapidBoard .ghx-issue-fields .ghx-summary .ghx-inner {
+  height: auto !important;
+}
+
+.BPA-RapidBoard .ghx-issue-fields {
+  position: absolute !important;
+  left: 36px !important;
+  top: 10px !important;
+  width: 100% !important;
+}
+
+.BPA-RapidBoard .ghx-issue-fields > * {
+  width: auto !important;
+  float: left !important;
+  line-height: 1em !important;
+  display: inline !important;
+  margin-left: 3px !important;
+  position: initial !important;
+}
+
+.BPA-RapidBoard .ghx-avatar {
+  top: 2px !important;
+  right: 2px !important;
+}
+
+.BPA-RapidBoard .ghx-issue .ghx-flags {
+  position: absolute !important;
+  top: 10px !important;
+}
+
+.BPA-RapidBoard .ghx-issue .ghx-summary {
+  white-space: nowrap !important;
+  max-width: 85% !important;
+  position: relative !important;
+  top: 0px !important;
+  left: 8px !important;
+}
+
+.BPA-RapidBoard .ghx-issue .ghx-summary.aui-label {
+  top: -2px !important;
+  left: 3px !important;
+}
+
+.BPA-RapidBoard .ghx-days b {
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAVEAAAAECAYAAAA3QgyyAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3gEeADUMwsFQfgAAAJtJREFUWMPtl7ENgDAMBN+IhoKB2CFbMBdbZAcGoqB8GgpQEiFBJKzov4v8sq9woryRRElmdjvnvKen3ORHkTT3fAP88u1wzxfHxS1f2Gb3fKvj+zGR7vkAoK/Y0x4eW149lXxt8u2Z4oB07ndfk3xhm5NiHJdkbgVfk3xTZp/XzN5X8DXB10GSJEl6/3tUnFecV5xXnFecfx/nD8ePogPcq4W2AAAAAElFTkSuQmCC');
+}
