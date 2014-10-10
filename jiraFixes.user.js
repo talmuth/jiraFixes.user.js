@@ -4,10 +4,10 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks-v2
-// @version        0.10.0
+// @version        0.10.1
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
-// @resource       UI_CSS https://github.com/talmuth/jiraFixes.user.js/raw/master/style.css
+// @resource       UI_CSS http://bit.ly/bpa-ag-jira-css-for-usersript
 // @grant          GM_addStyle
 // @grant          GM_getResourceText
 // ==/UserScript==
@@ -17,7 +17,7 @@
     /* global GH */
     /* global AJS */
 
-    GM_addStyle(GM_getResourceText ("jqUI_CSS"));
+    GM_addStyle(GM_getResourceText("UI_CSS"));
 
     GH.formatHours = function(seconds) {
         var d = seconds / 3600 / 8,
