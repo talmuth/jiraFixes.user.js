@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks-v2
-// @version        0.10.1
+// @version        0.11.0
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // @resource       UI_CSS http://bit.ly/bpa-ag-jira-css-for-usersript
@@ -241,4 +241,35 @@
         var $element = $(element);
         $element.closest('span.date').prop('title', $element.attr('datetime'));
     });
+
+    if ($('#project-name-val').text() == 'BPA') {
+        var COMPONENTS = ['Agate Binder - BPA-UI', 'Agate Binder - Account-Security-UI',
+                          'Agate Bindle - bpa-bundle', 'Agate Bundle - account-security-bundle',
+                          'PHP Library - bpa-frontend-helpers'];
+        var component = $.trim($('#components-field > a').attr('title'));
+        console.log('Component: ' + component);
+        if (COMPONENTS.indexOf(component) >= 0) {
+            var $affectedVersion = $('#customfield_12512-val');
+            var affectedVersion = $.trim($affectedVersion.text());
+            if (affectedVersion.length) {
+                $affectedVersion.text('')
+                .append('<a target="_blank" href="/issues/?jql=' +
+                        encodeURIComponent('project = BPA and component = "' + component + '" and "Affected Version" = ' + affectedVersion.replace(/,/g, '')) +
+                        '">v' + affectedVersion.split(',').map(function(x){return x*1;}).join('.') + '</a>');
+            }
+            $('#versions-val').closest('#issuedetails li.item').before($('#rowForcustomfield_12512')).remove();
+
+            var $fixedVersion = $('#customfield_12511-val');
+            var fixedVersion = $.trim($fixedVersion.text());
+            if (fixedVersion.length) {
+                $fixedVersion.text('')
+                .append('<a target="_blank" href="/issues/?jql=' +
+                        encodeURIComponent('project = BPA and component = "' + component +
+                                           '" and ("Fixed Version" = ' + fixedVersion.replace(/,/g, '') + ' or "Affected Version" = ' + fixedVersion.replace(/,/g, '') + ')') +
+                                           '">v' + fixedVersion.split(',').map(function(x){return x*1;}).join('.') + '</a>');
+            }
+            $('#fixfor-val').closest('#issuedetails li.item').remove();
+            $('#rowForcustomfield_12512').after($('#rowForcustomfield_12511').addClass('item-right'));
+        }
+    }
 })();
