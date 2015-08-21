@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks-v2
-// @version        0.11.1
+// @version        0.11.2
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // @resource       UI_CSS http://bit.ly/bpa-ag-jira-css-for-usersript
@@ -79,8 +79,7 @@
         GH.SwimlaneView.AG[swimlaneId].epics.forEach(function(issue) {
             var $issue = $issues.filter('[data-epic-key="' + issue.key + '"]');
 
-            $issue.find('.ghx-summary').addClass('aui-label').css({
-                backgroundColor: issue.fields.customfield_10913,
+            $issue.find('.ghx-summary').addClass('aui-label').addClass(issue.fields.customfield_10913).css({
                 top: '-2px !important'
             });
 
