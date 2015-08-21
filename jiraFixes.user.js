@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks-v2
-// @version        0.11.0
+// @version        0.11.1
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // @resource       UI_CSS http://bit.ly/bpa-ag-jira-css-for-usersript
@@ -85,8 +85,8 @@
             });
 
             $('<a href="/browse/' + issue.key + '" target="_blank" title="' + issue.key + '" ' +
-                'style="background-color:' + issue.fields.customfield_10913 + ';text-transform:none;margin-right:3px;" ' +
-                'class="aui-badge">' + issue.fields.customfield_10911 + '</a>').prependTo($issue.find('.bpa-badges'));
+                'style="text-transform:none;margin-right:3px;" ' +
+                'class="aui-badge ' + issue.fields.customfield_10913 + '">' + issue.fields.customfield_10911 + '</a>').prependTo($issue.find('.bpa-badges'));
         });
     };
 
