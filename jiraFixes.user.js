@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks-v2
-// @version        0.12.2
+// @version        0.13.0
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // @resource       UI_CSS http://bit.ly/bpa-ag-jira-css-for-usersript
@@ -89,6 +89,21 @@
         });
     };
 
+    render_blocks = function(issue) {
+        $.ajax({
+            type: 'GET',
+            url: '/rest/api/2/search?jql=issue+in+linkedIssues("' + $(issue).data('issue-key') + '",+"blocks")+and+resolutiondate+is+empty',
+            contentType: 'application/json'
+        })
+        .done(function(data) {
+            if (data.total > 0) {
+                var $flags = $(issue).find('.ghx-flags');
+                $flags.find(' .ghx-priority, .ghx-flag').remove();
+                $flags.append('<span class="ghx-priority js-blocker-issue" title="Blocks ' + data.total + ' issue(s)" />');
+            }
+        });
+    };
+
     GH.SwimlaneView.renderBlockers = function(swimlaneId) {
         var $swimlane = $("#ghx-pool").find('.ghx-swimlane[swimlane-id="' + swimlaneId + '"]'),
             $issues = $swimlane.find('.ghx-issue');//.ghx-flagged');
@@ -104,6 +119,8 @@
                     var $flags = $(issue).find('.ghx-flags');
                     $flags.find(' .ghx-priority, .ghx-flag').remove();
                     $flags.append('<span class="ghx-priority js-blocked-issue" title="Blocked by ' + data.total + ' issue(s)" />');
+                }  else {
+                    render_blocks(issue);
                 }
             });
         });
