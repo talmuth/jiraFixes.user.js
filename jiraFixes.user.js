@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks-v2
-// @version        0.13.0
+// @version        0.13.1
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // @resource       UI_CSS http://bit.ly/bpa-ag-jira-css-for-usersript
@@ -118,7 +118,11 @@
                 if (data.total > 0) {
                     var $flags = $(issue).find('.ghx-flags');
                     $flags.find(' .ghx-priority, .ghx-flag').remove();
-                    $flags.append('<span class="ghx-priority js-blocked-issue" title="Blocked by ' + data.total + ' issue(s)" />');
+                    if (data.issues.filter(function(issue){ return $.inArray(issue.fields.issuetype.name, ['RequestSubtask', 'Request']) < 0; }).length > 0) {
+                        $flags.append('<span class="ghx-priority js-blocked-issue" title="Blocked by ' + data.total + ' issue(s)" />');
+                    } else {
+                        $flags.append('<span class="ghx-priority js-blocked-by-request" title="Blocked by ' + data.total + ' request(s)" />');
+                    }
                 }  else {
                     render_blocks(issue);
                 }
