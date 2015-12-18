@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks-v2
-// @version        0.13.1
+// @version        0.13.2
 // @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
 // @resource       UI_CSS http://bit.ly/bpa-ag-jira-css-for-usersript
@@ -28,6 +28,22 @@
 
     GH = GH || {};
     GH.SwimlaneView = GH.SwimlaneView || {};
+    GH.bpaFixesConfig = {
+        projects: ['BPA', 'AUTH'],
+        components: [
+            'Agate Binder - BPA-UI',
+            'Agate Binder - Account-Security-UI',
+            'Agate Bindle - bpa-bundle',
+            'Agate Bundle - account-security-bundle',
+            'PHP Library - bpa-frontend-helpers',
+            'Agora - Commerce',
+            'Agora - Approvals',
+            'Agora - Forex'
+        ],
+        selectors: {
+            affectedVersion: '#customfield_12512-val'
+        }
+    };
 
     GH.SwimlaneView.renderEstimates = function(swimlaneId) {
         var $swimlane = $("#ghx-pool").find('.ghx-swimlane[swimlane-id="' + swimlaneId + '"]'),
@@ -284,31 +300,53 @@
         $element.closest('span.date').prop('title', $element.attr('datetime'));
     });
 
-    if ($('#project-name-val').text() == 'BPA') {
-        var COMPONENTS = ['Agate Binder - BPA-UI', 'Agate Binder - Account-Security-UI',
-                          'Agate Bindle - bpa-bundle', 'Agate Bundle - account-security-bundle',
-                          'PHP Library - bpa-frontend-helpers'];
+    var currentProject = $('#project-name-val').text();
+    console.log('Project: ' + currentProject);
+    if (GH.bpaFixesConfig.projects.indexOf(currentProject) >= 0) {
+        console.log('Project matched');
+
         var component = $.trim($('#components-field > a').attr('title'));
         console.log('Component: ' + component);
-        if (COMPONENTS.indexOf(component) >= 0) {
-            var $affectedVersion = $('#customfield_12512-val');
-            var affectedVersion = $.trim($affectedVersion.text());
-            if (affectedVersion.length) {
-                $affectedVersion.text('')
-                .append('<a target="_blank" href="/issues/?jql=' +
-                        encodeURIComponent('project = BPA and component = "' + component + '" and "Affected Version" = ' + affectedVersion.replace(/,/g, '')) +
-                        '">v' + affectedVersion.split(',').map(function(x){return x*1;}).join('.') + '</a>');
-            }
-            $('#versions-val').closest('#issuedetails li.item').before($('#rowForcustomfield_12512')).remove();
 
-            var $fixedVersion = $('#customfield_12511-val');
-            var fixedVersion = $.trim($fixedVersion.text());
-            if (fixedVersion.length) {
+        var componentMatched = GH.bpaFixesConfig.components.indexOf(component) >= 0;
+        console.log('Component matched: ' + (componentMatched ? 'yes' : 'no'));
+
+        var versionToString = function(version) {
+            return 'v' + version.split(',').map(function(x){ return x*1; }).join('.');
+        };
+
+        var $affectedVersion = $('#customfield_12512-val');
+        var affectedVersion = $.trim($affectedVersion.text());
+        if (affectedVersion.length) {
+            var affectedVersionString = versionToString(affectedVersion);
+            if (componentMatched) {
+                $affectedVersion.text('')
+                    .append('<a target="_blank" href="/issues/?jql=' +
+                            encodeURIComponent('project = ' + currentProject +
+                                               ' and component = "' + component +
+                                               '" and "Affected Version" = ' + affectedVersion.replace(/,/g, '')) +
+                            '">' + affectedVersionString + '</a>');
+            } else {
+                $affectedVersion.text(affectedVersionString);
+            }
+
+            $('#versions-val').closest('#issuedetails li.item').before($('#rowForcustomfield_12512')).remove();
+        }
+
+        var $fixedVersion = $('#customfield_12511-val');
+        var fixedVersion = $.trim($fixedVersion.text());
+        if (fixedVersion.length) {
+            var fixedVersionString = versionToString(fixedVersion);
+            if (componentMatched) {
                 $fixedVersion.text('')
-                .append('<a target="_blank" href="/issues/?jql=' +
-                        encodeURIComponent('project = BPA and component = "' + component +
-                                           '" and ("Fixed Version" = ' + fixedVersion.replace(/,/g, '') + ' or "Affected Version" = ' + fixedVersion.replace(/,/g, '') + ')') +
-                                           '">v' + fixedVersion.split(',').map(function(x){return x*1;}).join('.') + '</a>');
+                    .append('<a target="_blank" href="/issues/?jql=' +
+                        encodeURIComponent('project = ' + currentProject +
+                                           ' and component = "' + component +
+                                           '" and ("Fixed Version" = ' + fixedVersion.replace(/,/g, '') +
+                                           ' or "Affected Version" = ' + fixedVersion.replace(/,/g, '') + ')') +
+                                           '">' + fixedVersionString + '</a>');
+            } else {
+                $fixedVersion.text(fixedVersionString);
             }
             $('#fixfor-val').closest('#issuedetails li.item').remove();
             $('#rowForcustomfield_12512').after($('#rowForcustomfield_12511').addClass('item-right'));
