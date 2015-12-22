@@ -61,6 +61,7 @@
 
 .BPA-RapidBoard .ghx-issue .ghx-days {
   display: none !important;
+  width: 100% !important;
 }
 
 .BPA-RapidBoard .ghx-issue .ghx-days.display-anyway {
