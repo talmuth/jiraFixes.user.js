@@ -28,22 +28,31 @@
   margin-left: 10px !important;
 }
 
-#ghx-controls-work {
+.BPA-RapidBoard #ghx-controls-work {
   min-height: 30% !important;
 }
 
-#js-work-quickfilters dd, #js-work-quickfilters dt {
+.BPA-RapidBoard #js-work-quickfilters dd,
+.BPA-RapidBoard #js-work-quickfilters dt {
   margin: 0 !important;
   padding: 0 !important;
   font-size: 75% !important;
 }
 
-#js-work-quickfilters {
+.BPA-RapidBoard #js-work-quickfilters {
   min-height: 20px !important;
 }
 
-#js-work-quickfilters a {
+.BPA-RapidBoard #js-work-quickfilters a {
   padding: 2px !important;
+}
+
+.BPA-RapidBoard #ghx-modes .js-bpa-mode {
+  box-shadow: inset 0 3px 6px 0 rgba(0, 0, 0, 0.1) !important;
+  background-image: none !important;
+  background-color: #f2f2f2 !important;
+  text-shadow: none !important;
+  text-decoration: none !important;
 }
 
 .BPA-RapidBoard .ghx-issue {
