@@ -4,48 +4,129 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks-v2
-// @version        0.13.2
-// @require        https://gist.github.com/BrockA/2625891/raw/waitForKeyElements.js
-// @require        http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js
+// @version        0.14.0
 // @resource       UI_CSS http://bit.ly/bpa-ag-jira-css-for-usersript
+// @require        https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js
 // @grant          GM_addStyle
 // @grant          GM_getResourceText
 // ==/UserScript==
 
+/* jshint -W097 */
+'use strict';
+
 (function() {
-    /* global waitForKeyElements */
     /* global GH */
     /* global AJS */
+    /* global $ */
 
     GM_addStyle(GM_getResourceText("UI_CSS"));
 
-    GH.formatHours = function(seconds) {
+    GH = GH || {};
+    GH.SwimlaneView = GH.SwimlaneView || {};
+    GH.SwimlaneView._rerenderCell = GH.SwimlaneView.rerenderCell;
+    GH.SwimlaneView.rerenderCell = function(E, G) {
+        GH.SwimlaneView._rerenderCell(E, G);
+
+        JH.fn.renderEstimates(E);
+        JH.fn.renderEpicInfo(E);
+        JH.fn.renderBlockers(E);
+    };
+    GH.SwimlaneView.AG = {};
+
+    var JH = {};
+    JH.fn = {};
+    JH.config = {
+        selectors: {
+            affectedVersion: '#customfield_12512-val',
+            fixedVersion: '#customfield_12511-val'
+        }
+    };
+    JH.$body = $('body');
+
+    JH.fn.formatHours = function(seconds) {
         var d = seconds / 3600 / 8,
             h = Math.round(8 * (d - Math.floor(d)));
 
         return Math.floor(d) + ' days' + (h > 0 ? ' ' + h + ' hours':'');
     };
+    JH.fn.renderBlocks = function(issue) {
+        $.ajax({
+            type: 'GET',
+            url: '/rest/api/2/search?jql=issue+in+linkedIssues("' + $(issue).data('issue-key') + '",+"blocks")+and+resolutiondate+is+empty',
+            contentType: 'application/json'
+        })
+        .done(function(data) {
+            if (data.total > 0) {
+                var $flags = $(issue).find('.ghx-flags');
+                $flags.find(' .ghx-priority, .ghx-flag').remove();
+                $flags.append('<span class="ghx-priority js-blocker-issue" title="Blocks ' + data.total + ' issue(s)" />');
+            }
+        });
+    };
+    JH.fn.updateSwimlane = function() {
+        var $node = $(this),
+            $issues = $node.find('.ghx-issue'),
+            issues = $issues.map(function() {
+                return $(this).data('issue-key');
+            }),
+            swimlaneId = $node.attr('swimlane-id');
 
-    GH = GH || {};
-    GH.SwimlaneView = GH.SwimlaneView || {};
-    GH.bpaFixesConfig = {
-        projects: ['BPA', 'AUTH'],
-        components: [
-            'Agate Binder - BPA-UI',
-            'Agate Binder - Account-Security-UI',
-            'Agate Bindle - bpa-bundle',
-            'Agate Bundle - account-security-bundle',
-            'PHP Library - bpa-frontend-helpers',
-            'Agora - Commerce',
-            'Agora - Approvals',
-            'Agora - Forex'
-        ],
-        selectors: {
-            affectedVersion: '#customfield_12512-val'
+        GH.SwimlaneView.AG[swimlaneId] = {};
+        GH.SwimlaneView.AG[swimlaneId].issues = [];
+        GH.SwimlaneView.AG[swimlaneId].epics = [];
+
+        if ($issues.length > 0) {
+            $.ajax({
+                type: 'GET',
+                url: '/rest/api/2/search?jql=key+in(' + issues.toArray().join(',') + ')&fields=timetracking,customfield_10000,customfield_10910&maxResults=1000',
+                contentType: 'application/json'
+            })
+            .done(function(data) {
+                var epics = data.issues
+                    .filter(function(issue) {
+                    return issue.fields.customfield_10910;
+                })
+                .map(function(issue) {
+                    return issue.fields.customfield_10910;
+                });
+
+
+                GH.SwimlaneView.AG[swimlaneId].issues = data.issues;
+                JH.fn.renderEstimates(swimlaneId);
+
+                if (epics.length) {
+                    $.ajax({
+                        type: 'GET',
+                        url: '/rest/api/2/search?jql=key+in(' + epics.join(',') + ')&fields=customfield_10911,customfield_10913&maxResults=1000',
+                        contentType: 'application/json'
+                    })
+                    .done(function(data) {
+                        GH.SwimlaneView.AG[swimlaneId].epics = data.issues;
+                        JH.fn.renderEpicInfo(swimlaneId);
+                    });
+                }
+            });
+            JH.fn.renderBlockers(swimlaneId);
         }
     };
+    JH.fn.makeFakeParentsClickable = function() {
+        var issue = $(this).data('issue-key'),
+            $key = $(this).find('.ghx-group .ghx-key');
+        $key.text('');
 
-    GH.SwimlaneView.renderEstimates = function(swimlaneId) {
+        $('<a href="/browse/' + issue + '" title="' + issue + '" class="ghx-key-link js-detailview">' + issue + '</a>').appendTo($key);
+        $key.find('a').click(GH.WorkSelectionController.handleIssueClick);
+    };
+    JH.fn.makeEpicClickableInDetailView = function() {
+        var $epic = $('.ghx-fieldname-customfield_10911 .js-epic-remove', this)
+        if ($epic.length) {
+            var issue = $epic.data('epickey');
+            var $new = $('<a href="/browse/' + issue + '" target="_blank" title="' + issue + '" class="' + $epic.prop('class') +  ' ">' + $epic.prop('title') + '</a>');
+            $epic.replaceWith($new);
+            $new.removeClass('aui-label-closeable js-epic-remove');
+        }
+    };
+    JH.fn.renderEstimates = function(swimlaneId) {
         var $swimlane = $("#ghx-pool").find('.ghx-swimlane[swimlane-id="' + swimlaneId + '"]'),
             $issues = $swimlane.find('.ghx-issue'),
             $header = $swimlane.find('.ghx-heading .ghx-info'),
@@ -81,14 +162,13 @@
             $days = $('<span class="ghx-description js-days-info" style="margin-left:.3em;"/>').appendTo($header);
         }
 
-        var text = '/ ' + GH.formatHours(total);
+        var text = '/ ' + JH.fn.formatHours(total);
         if (flagged > 0) {
-            text += ' (flagged: ' + GH.formatHours(flagged) + ')';
+            text += ' (flagged: ' + JH.fn.formatHours(flagged) + ')';
         }
         $days.text(text);
     };
-
-    GH.SwimlaneView.renderEpicInfo = function(swimlaneId) {
+    JH.fn.renderEpicInfo = function(swimlaneId) {
         var $swimlane = $("#ghx-pool").find('.ghx-swimlane[swimlane-id="' + swimlaneId + '"]'),
             $issues = $swimlane.find('.ghx-issue');
 
@@ -104,23 +184,7 @@
                 'class="aui-badge ' + issue.fields.customfield_10913 + '">' + issue.fields.customfield_10911 + '</a>').prependTo($issue.find('.bpa-badges'));
         });
     };
-
-    render_blocks = function(issue) {
-        $.ajax({
-            type: 'GET',
-            url: '/rest/api/2/search?jql=issue+in+linkedIssues("' + $(issue).data('issue-key') + '",+"blocks")+and+resolutiondate+is+empty',
-            contentType: 'application/json'
-        })
-        .done(function(data) {
-            if (data.total > 0) {
-                var $flags = $(issue).find('.ghx-flags');
-                $flags.find(' .ghx-priority, .ghx-flag').remove();
-                $flags.append('<span class="ghx-priority js-blocker-issue" title="Blocks ' + data.total + ' issue(s)" />');
-            }
-        });
-    };
-
-    GH.SwimlaneView.renderBlockers = function(swimlaneId) {
+    JH.fn.renderBlockers = function(swimlaneId) {
         var $swimlane = $("#ghx-pool").find('.ghx-swimlane[swimlane-id="' + swimlaneId + '"]'),
             $issues = $swimlane.find('.ghx-issue');//.ghx-flagged');
 
@@ -140,147 +204,185 @@
                         $flags.append('<span class="ghx-priority js-blocked-by-request" title="Blocked by ' + data.total + ' request(s)" />');
                     }
                 }  else {
-                    render_blocks(issue);
+                    JH.fn.renderBlocks(issue);
                 }
             });
         });
     };
+    JH.fn.updateLinks = function() {
+        $('a[href^="https://support.odesk.com/tickets/"],a[href^="https://upwork.zendesk.com/agent/tickets/"]').each(function() {
+            $(this).prop('href', 'https://int.upwork.com/obo/zendesk-request/' + $(this).prop('href').split('tickets/')[1]).prop('target', '_blank');
+        });
+    }
+    JH.fn.renderReviewButtons = function () {
+        if ($('#opsbar-opsbar-transitions .review-status-trigger').length > 0) return;
+        if ($('#status-val.value').text().trim() == 'In Progress' && $('#customfield_10014-val').length) {
+            var $user = $('#header-details-user-fullname');
 
-    GH.SwimlaneView._rerenderCell = GH.SwimlaneView.rerenderCell;
+            if ($('#assignee-val .user-hover').attr('rel') == $user.data('username')) {
+                if ($.inArray($('#customfield_11511-val.value').text().trim(), ['No', 'Denied']) >= 0) {
+                    $('<li class="toolbar-item"><a class="toolbar-trigger review-status-trigger" data-status="Requested">Request review<a></li>').appendTo('#opsbar-opsbar-transitions');
+                }
+            } else if ($('#customfield_10014-val .user-hover').attr('rel') == $user.data('username')) {
+                if ($('#customfield_11511-val.value').text().trim() == 'Requested') {
+                    $('<li class="toolbar-item"><a class="toolbar-trigger review-status-trigger" href="#" data-status="Approved">Approve<a></li>' +
+                      '<li class="toolbar-item"><a class="toolbar-trigger review-status-trigger" href="#" data-status="Denied">Deny<a></li>').appendTo('#opsbar-opsbar-transitions');
+                }
+            }
 
-    GH.SwimlaneView.rerenderCell = function(E, G) {
-        GH.SwimlaneView._rerenderCell(E, G);
+            $('#opsbar-opsbar-transitions .review-status-trigger').click(function() {
+                var $reviewer = $('#customfield_10014-val'),
+                    issue = $('#key-val').data('issue-key');
+                if ($reviewer.length) {
+                    var reviewerId = $reviewer.find('.user-hover').attr('rel');
+                    if ($('#customfield_11135-field .tinylink > .user-hover[rel=' + reviewerId + ']').length === 0) {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/rest/api/2/issue/' + issue + '/watchers',
+                            contentType: 'application/json',
+                            data: JSON.stringify(reviewerId)
+                        });
+                    }
+                }
 
-        GH.SwimlaneView.renderEstimates(E);
-        GH.SwimlaneView.renderEpicInfo(E);
-        GH.SwimlaneView.renderBlockers(E);
+                $.ajax({
+                    type: 'PUT',
+                    url: '/rest/api/2/issue/' + issue,
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        "fields": {
+                            "customfield_11511": {
+                                "value": $(this).data('status')
+                            }
+                        }
+                    })
+                })
+                    .done(function() {
+                    location.reload();
+                });
+            });
+        }
+    };
+    JH.fn.versionToString = function(version) {
+        return 'v' + version.split(',').map(function(x){ return x*1; }).join('.');
+    };
+    JH.fn.renderVersions = function() {
+        if ($(JH.config.selectors.affectedVersion + ',' + JH.config.selectors.fixedVersion).length == 0) {
+            console.debug('JH: No affected or fixed version found');
+            return;
+        }
+
+        var currentProject = $('#project-name-val').text();
+        console.debug('JH: Project detected - ' + currentProject);
+        var components = $('#components-field > a').map(function(){return '"' + $.trim($(this).attr('title')) + '"';}).toArray().join();
+        console.debug('JH: Components detected - ' + components);
+
+        var $affectedVersion = $('#customfield_12512-val'), affectedVersion;
+        if ($affectedVersion.length) {
+            if (!$affectedVersion.data('affectedVersion')) {
+                $affectedVersion.data('affectedVersion', $.trim($affectedVersion.text()));
+            }
+            console.debug('JH: Affected version - ' + (affectedVersion = $affectedVersion.data('affectedVersion')));
+
+            if (affectedVersion.length) {
+                var affectedVersionString = JH.fn.versionToString($affectedVersion.data('affectedVersion'));
+                if (components.length) {
+                    $affectedVersion.empty()
+                        .append('<a target="_blank" href="/issues/?jql=' +
+                                    encodeURIComponent('project = ' + currentProject +
+                                                       ' and component in (' + components +
+                                                       ') and "Affected Version" = ' + $affectedVersion.data('affectedVersion').replace(/,/g, '')) +
+                                    '">' + affectedVersionString + '</a>');
+                } else {
+                    $affectedVersion.text(affectedVersionString);
+                }
+
+                $('#versions-val').closest('#issuedetails li.item').before($('#rowForcustomfield_12512')).remove();
+            }
+        }
+
+        var $fixedVersion = $('#customfield_12511-val'), fixedVersion;
+        if ($fixedVersion.length) {
+            if (!$fixedVersion.data('fixedVersion')) {
+                $fixedVersion.data('fixedVersion', $.trim($fixedVersion.text()));
+            }
+            console.debug('JH: Fixed version - ' + (fixedVersion = $fixedVersion.data('fixedVersion')));
+            if (fixedVersion.length) {
+                var fixedVersionString = JH.fn.versionToString(fixedVersion);
+                if (components.length) {
+                    $fixedVersion.empty()
+                        .append('<a target="_blank" href="/issues/?jql=' +
+                                encodeURIComponent('project = ' + currentProject +
+                                                   ' and component in (' + components +
+                                                   ') and ("Fixed Version" = ' + fixedVersion.replace(/,/g, '') +
+                                                   ' or "Affected Version" = ' + fixedVersion.replace(/,/g, '') + ')') +
+                                '">' + fixedVersionString + '</a>');
+                } else {
+                    $fixedVersion.text(fixedVersionString);
+                }
+                $('#fixfor-val').closest('#issuedetails li.item').remove();
+                $('#rowForcustomfield_12512').after($('#rowForcustomfield_12511').addClass('item-right'));
+            }
+        }
     };
 
-    GH.SwimlaneView.AG = {};
+    JH.fn.renderIssue = function() {
+        JH.fn.renderReviewButtons();
+        JH.fn.updateLinks();
+        JH.fn.renderVersions();
+    };
 
-    waitForKeyElements('#ghx-work .ghx-parent-group.js-fake-parent', function(node) {
-        var issue = $(node).data('issue-key'),
-            $key = $(node).find('.ghx-group .ghx-key');
-        $key.text('');
+    JH.GH = {};
+    JH.GH.$element = $('#gh');
+    JH.GH.fn = {};
+    if (JH.GH.$element.length) {
 
-        $('<a href="/browse/' + issue + '" title="' + issue + '" class="ghx-key-link js-detailview">' + issue + '</a>').appendTo($key);
-        $key.find('a').click(GH.WorkSelectionController.handleIssueClick);
-    });
+    }
 
-    waitForKeyElements('#ghx-detail-issue', function(node) {
-        var $epic = $(node).find('.ghx-fieldname-customfield_10911 .js-epic-remove'),
-            issue;
-        if ($epic.length) {
-            $epic.empty().css({
-                paddingRight: '3px'
-            });
-            issue = $epic.data('epickey');
-            $('<a href="/browse/' + issue + '" target="_blank" title="' + issue + '" class="ghx-key-link js-detailview">' + $epic.prop('title') + '</a>').appendTo($epic);
-        }
-    });
-
-    waitForKeyElements('.BPA-RapidBoard #ghx-pool .ghx-swimlane', function(node) {
-        var $node = $(node),
-            $issues = $node.find('.ghx-issue'),
-            issues = $issues.map(function() {
-                return $(this).data('issue-key');
-            }),
-            swimlaneId = $node.attr('swimlane-id');
-
-        GH.SwimlaneView.AG[swimlaneId] = {};
-        GH.SwimlaneView.AG[swimlaneId].issues = [];
-        GH.SwimlaneView.AG[swimlaneId].epics = [];
-
-        if ($issues.length > 0) {
-            $.ajax({
-                type: 'GET',
-                url: '/rest/api/2/search?jql=key+in(' + issues.toArray().join(',') + ')&fields=timetracking,customfield_10000,customfield_10910&maxResults=1000',
-                contentType: 'application/json'
-            })
-            .done(function(data) {
-                var epics = data.issues
-                    .filter(function(issue) {
-                    return issue.fields.customfield_10910;
-                })
-                .map(function(issue) {
-                    return issue.fields.customfield_10910;
-                });
-
-
-                GH.SwimlaneView.AG[swimlaneId].issues = data.issues;
-                GH.SwimlaneView.renderEstimates(swimlaneId);
-
-                if (epics.length) {
-                    $.ajax({
-                        type: 'GET',
-                        url: '/rest/api/2/search?jql=key+in(' + epics.join(',') + ')&fields=customfield_10911,customfield_10913&maxResults=1000',
-                        contentType: 'application/json'
-                    })
-                    .done(function(data) {
-                        GH.SwimlaneView.AG[swimlaneId].epics = data.issues;
-                        GH.SwimlaneView.renderEpicInfo(swimlaneId);
-                    });
+    JH.I = {};
+    JH.I.$element = $('#content');
+    JH.I.fn = {};
+    if (JH.I.$element.length) {
+        JH.I.fn.muCallback = function(mutations, mut) {
+            mutations.map(function(mutation){
+                if (mutation.target.id == 'components-val' && mutation.type == 'attributes' && mutation.attributeName == 'class' && $(mutation.target).is('.inactive')) {
+                    JH.fn.renderIssue();
+                } else if (mutation.target.id == 'stalker' && mutation.type == 'childList' && $('#opsbar-opsbar-transitions .review-status-trigger', $(mutation.addedNodes)).length == 0) {
+                    JH.fn.renderReviewButtons();
                 }
             });
-            GH.SwimlaneView.renderBlockers(swimlaneId);
-        }
-    });
+        };
+        JH.I.mu = new MutationObserver(JH.I.fn.muCallback);
 
-    $('a[href^="https://support.odesk.com/tickets/"]').each(function() {
-        $(this).prop('href', 'https://int.odesk.com/obo/zendesk-request/' + $(this).prop('href').split('tickets/')[1]).prop('target', '_blank');
-    });
-
-    if ($('#status-val.value').text().trim() == 'In Progress' && $('#customfield_10014-val').length) {
-        var $user = $('#header-details-user-fullname');
-
-        if ($('#assignee-val .user-hover').attr('rel') == $user.data('username')) {
-            if ($.inArray($('#customfield_11511-val.value').text().trim(), ['No', 'Denied']) >= 0) {
-                $('<li class="toolbar-item"><a class="toolbar-trigger review-status-trigger" data-status="Requested">Request review<a></li>').appendTo('#opsbar-opsbar-transitions');
-            }
-        } else if ($('#customfield_10014-val .user-hover').attr('rel') == $user.data('username')) {
-            if ($('#customfield_11511-val.value').text().trim() == 'Requested') {
-                $('<li class="toolbar-item"><a class="toolbar-trigger review-status-trigger" href="#" data-status="Approved">Approve<a></li>' +
-                    '<li class="toolbar-item"><a class="toolbar-trigger review-status-trigger" href="#" data-status="Denied">Deny<a></li>').appendTo('#opsbar-opsbar-transitions');
-            }
-        }
-
-        $('#opsbar-opsbar-transitions .review-status-trigger').click(function() {
-            var $reviewer = $('#customfield_10014-val'),
-                issue = $('#key-val').data('issue-key');
-            if ($reviewer.length) {
-                var reviewerId = $reviewer.find('.user-hover').attr('rel');
-                if ($('#customfield_11135-field .tinylink > .user-hover[rel=' + reviewerId + ']').length === 0) {
-                    $.ajax({
-                        type: 'POST',
-                        url: '/rest/api/2/issue/' + issue + '/watchers',
-                        contentType: 'application/json',
-                        data: JSON.stringify(reviewerId)
-                    });
-                }
-            }
-
-            $.ajax({
-                type: 'PUT',
-                url: '/rest/api/2/issue/' + issue,
-                dataType: 'json',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    "fields": {
-                        "customfield_11511": {
-                            "value": $(this).data('status')
-                        }
-                    }
-                })
-            })
-            .done(function() {
-                location.reload();
-            });
+        JH.I.mu.observe(JH.I.$element.get(0), {
+            attributes: true,
+            childList: true,
+            characterData: true,
+            characterDataOldValue: true,
+            subtree: true
         });
     }
 
-    if (window.location.href.match(/(?:RapidBoard\.jspa\?rapidView=(?:228|238|264|292)|Dashboard\.jspa\?selectPageId=10810|ifr\?container=atlassian\&mid=12631)/)) {
-        $('body').addClass('BPA-RapidBoard');
-        $('#ghx-modes').append($('<a href="#" class="aui-button js-refresh-now">Refresh</a>').click(GH.RapidBoard.reload));
+    JH.fn.toggleBpaMode = function(mode) {
+        JH.$body.toggleClass('BPA-RapidBoard');
+        localStorage.setItem('FH.gh.RapidBoard.BPAMode.' + JH.GH.boardId, JH.$body.is('.BPA-RapidBoard'));
+        GH.RapidBoard.reload();
+    };
+
+    if (JH.GH.$element.length) {
+        JH.GH.boardId = document.location.search.match(/rapidView=(\d+)/)[1];
+
+        JH.GH.boardState = localStorage.getItem('FH.gh.RapidBoard.BPAMode.' + JH.GH.boardId);
+
+        $('#ghx-modes')
+            .append($('<a href="#" class="aui-button js-refresh-now">Refresh</a>').click(GH.RapidBoard.reload))
+            .append($('<a href="#" class="aui-button js-bpa-mode">BPA Mode</a>').click(JH.fn.toggleBpaMode));
+        console.log('JH: BPA mode -', JH.GH.boardState);
+        if ((JH.GH.boardState === null && ['228'].indexOf(JH.GH.boardId) > -1) || JH.GH.boardState === 'true') {
+            JH.$body.addClass('BPA-RapidBoard')
+        }
+
         if (AJS.keys) {
             AJS.keys.shortcuts.push({
                 "moduleKey": "greenhopper-ashboard-refresh",
@@ -293,63 +395,30 @@
             });
             AJS.activeShortcuts = AJS.whenIType.fromJSON(AJS.keys.shortcuts);
         }
-    }
 
-    waitForKeyElements('.livestamp[datetime]', function(element) {
-        var $element = $(element);
-        $element.closest('span.date').prop('title', $element.attr('datetime'));
-    });
+        JH.GH.fn.muCallback = function(mutations, mut) {
+            if (JH.$body.is(':not(.BPA-RapidBoard)')) return;
 
-    var currentProject = $('#project-name-val').text();
-    console.log('Project: ' + currentProject);
-    if (GH.bpaFixesConfig.projects.indexOf(currentProject) >= 0) {
-        console.log('Project matched');
-
-        var component = $.trim($('#components-field > a').attr('title'));
-        console.log('Component: ' + component);
-
-        var componentMatched = GH.bpaFixesConfig.components.indexOf(component) >= 0;
-        console.log('Component matched: ' + (componentMatched ? 'yes' : 'no'));
-
-        var versionToString = function(version) {
-            return 'v' + version.split(',').map(function(x){ return x*1; }).join('.');
+            mutations.map(function(mutation){
+                if (mutation.type == 'childList' && mutation.target.id == 'ghx-pool') {
+                    var $lanes = $(mutation.addedNodes).filter('.ghx-swimlane');
+                    $lanes.map(JH.fn.updateSwimlane);
+                    $('.ghx-parent-group.js-fake-parent', $lanes).map(JH.fn.makeFakeParentsClickable);
+                } else if (mutation.type == 'childList' && mutation.target.id == 'ghx-detail-contents' ) {
+                    $(mutation.addedNodes).map(JH.fn.makeEpicClickableInDetailView);
+                }
+            });
         };
+        JH.GH.mu = new MutationObserver(JH.GH.fn.muCallback);
 
-        var $affectedVersion = $('#customfield_12512-val');
-        var affectedVersion = $.trim($affectedVersion.text());
-        if (affectedVersion.length) {
-            var affectedVersionString = versionToString(affectedVersion);
-            if (componentMatched) {
-                $affectedVersion.text('')
-                    .append('<a target="_blank" href="/issues/?jql=' +
-                            encodeURIComponent('project = ' + currentProject +
-                                               ' and component = "' + component +
-                                               '" and "Affected Version" = ' + affectedVersion.replace(/,/g, '')) +
-                            '">' + affectedVersionString + '</a>');
-            } else {
-                $affectedVersion.text(affectedVersionString);
-            }
-
-            $('#versions-val').closest('#issuedetails li.item').before($('#rowForcustomfield_12512')).remove();
-        }
-
-        var $fixedVersion = $('#customfield_12511-val');
-        var fixedVersion = $.trim($fixedVersion.text());
-        if (fixedVersion.length) {
-            var fixedVersionString = versionToString(fixedVersion);
-            if (componentMatched) {
-                $fixedVersion.text('')
-                    .append('<a target="_blank" href="/issues/?jql=' +
-                        encodeURIComponent('project = ' + currentProject +
-                                           ' and component = "' + component +
-                                           '" and ("Fixed Version" = ' + fixedVersion.replace(/,/g, '') +
-                                           ' or "Affected Version" = ' + fixedVersion.replace(/,/g, '') + ')') +
-                                           '">' + fixedVersionString + '</a>');
-            } else {
-                $fixedVersion.text(fixedVersionString);
-            }
-            $('#fixfor-val').closest('#issuedetails li.item').remove();
-            $('#rowForcustomfield_12512').after($('#rowForcustomfield_12511').addClass('item-right'));
-        }
+        JH.GH.mu.observe(JH.GH.$element.get(0), {
+            attributes: true,
+            childList: true,
+            characterData: true,
+            characterDataOldValue: true,
+            subtree: true
+        });
     }
+
+    document.JH = JH;
 })();
