@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks-v2
-// @version        0.14.0
+// @version        0.14.1
 // @resource       UI_CSS http://bit.ly/bpa-ag-jira-css-for-usersript
 // @require        https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js
 // @grant          GM_addStyle
@@ -209,11 +209,12 @@
             });
         });
     };
-    JH.fn.updateLinks = function() {
-        $('a[href^="https://support.odesk.com/tickets/"],a[href^="https://upwork.zendesk.com/agent/tickets/"]').each(function() {
+    JH.fn.updateLinks = function($target) {
+        var $links = $('a', $target || 'body');
+        $links.filter('a[href^="https://support.odesk.com/tickets/"],a[href^="https://upwork.zendesk.com/agent/tickets/"]').each(function() {
             $(this).prop('href', 'https://int.upwork.com/obo/zendesk-request/' + $(this).prop('href').split('tickets/')[1]).prop('target', '_blank');
         });
-    }
+    };
     JH.fn.renderReviewButtons = function () {
         if ($('#opsbar-opsbar-transitions .review-status-trigger').length > 0) return;
         if ($('#status-val.value').text().trim() == 'In Progress' && $('#customfield_10014-val').length) {
@@ -341,7 +342,7 @@
     }
 
     JH.I = {};
-    JH.I.$element = $('#content');
+    JH.I.$element = $('#jira');
     JH.I.fn = {};
     if (JH.I.$element.length) {
         JH.I.fn.muCallback = function(mutations, mut) {
@@ -350,6 +351,8 @@
                     JH.fn.renderIssue();
                 } else if (mutation.target.id == 'stalker' && mutation.type == 'childList' && $('#opsbar-opsbar-transitions .review-status-trigger', $(mutation.addedNodes)).length == 0) {
                     JH.fn.renderReviewButtons();
+                } else if (mutation.target.className == 'detail-content-container' && mutation.type == 'childList' && mutation.addedNodes.length > 0) { // update PR block after loading
+                    JH.fn.updateLinks($(mutation.target));
                 }
             });
         };
@@ -362,6 +365,8 @@
             characterDataOldValue: true,
             subtree: true
         });
+        JH.fn.renderIssue();
+        JH.fn.renderReviewButtons();
     }
 
     JH.fn.toggleBpaMode = function(mode) {
