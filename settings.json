@@ -1,6 +1,6 @@
 {
   "hideShowMorelinks": {
-    "type": bool,
+    "type": "ckeckbox",
     "default": true,
     "help": "Hide #show-more-links block (shorturl with image)"
   } 
