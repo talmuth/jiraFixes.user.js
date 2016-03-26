@@ -1,2 +1,7 @@
 {
+  hideShowMorelinks: {
+    type: bool,
+    default: true,
+    help: "Hide #show-more-links block (shorturl with image)"
+  } 
 }
