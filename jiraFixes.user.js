@@ -2,9 +2,10 @@
 // @name           Some minor fixes for JIRA
 // @namespace      https://github.com/talmuth/jiraFixes.user.js
 // @description    Some minor fixes for JIRA
+// @include        https://jira.odesk.com/*
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks-v2
-// @version        0.14.1
+// @version        0.14.2
 // @resource       UI_CSS http://bit.ly/bpa-ag-jira-css-for-usersript
 // @require        https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js
 // @grant          GM_addStyle
