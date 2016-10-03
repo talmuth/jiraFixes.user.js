@@ -5,7 +5,7 @@
 // @include        https://jira.odesk.com/*
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks-v2
-// @version        0.15.0
+// @version        0.15.1
 // @resource       UI_CSS http://bit.ly/bpa-ag-jira-css-for-usersript
 // @require        https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js
 // @grant          GM_addStyle
@@ -360,14 +360,19 @@
         GH.RapidBoard.reload();
     };
 
+    JH.fn.addCustomButtons = function($target) {
+        $target
+            .append($('<button class="aui-button js-refresh-now">Refresh</button>').click(GH.RapidBoard.reload))
+            .append($('<button class="aui-button js-bpa-mode">BPA Mode</button>').click(JH.fn.toggleBpaMode));
+    };
+
     if (JH.GH.$element.length) {
         JH.GH.boardId = document.location.search.match(/rapidView=(\d+)/)[1];
 
         JH.GH.boardState = localStorage.getItem('FH.gh.RapidBoard.BPAMode.' + JH.GH.boardId);
 
-        $('#ghx-view-pluggable .ghx-view-section:last')
-            .append($('<button class="aui-button js-refresh-now">Refresh</button>').click(GH.RapidBoard.reload))
-            .append($('<button class="aui-button js-bpa-mode">BPA Mode</button>').click(JH.fn.toggleBpaMode));
+        JH.fn.addCustomButtons($('#ghx-view-pluggable .ghx-view-section:last'));
+
         if ((JH.GH.boardState === null && ['228'].indexOf(JH.GH.boardId) > -1) || JH.GH.boardState === 'true') {
             JH.$body.addClass('BPA-RapidBoard')
         }
@@ -395,6 +400,8 @@
                     $('.ghx-parent-group.js-fake-parent', $lanes).map(JH.fn.makeFakeParentsClickable);
                 } else if (mutation.type == 'childList' && mutation.target.id == 'ghx-detail-contents' ) {
                     $(mutation.addedNodes).map(JH.fn.makeEpicClickableInDetailView);
+                } else if (mutation.type == 'childList' && 'ghx-view-pluggable' == mutation.target.id) {
+                     JH.fn.addCustomButtons($('.ghx-view-section:last', mutation.target));
                 }
             });
         };
