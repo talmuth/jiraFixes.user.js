@@ -5,7 +5,7 @@
 // @include        https://jira.odesk.com/*
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks-v2
-// @version        0.14.2
+// @version        0.15.0
 // @resource       UI_CSS http://bit.ly/bpa-ag-jira-css-for-usersript
 // @require        https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js
 // @grant          GM_addStyle
@@ -77,35 +77,16 @@
         GH.SwimlaneView.AG[swimlaneId].epics = [];
 
         if ($issues.length > 0) {
+            JH.fn.renderEpicInfo(swimlaneId);
+
             $.ajax({
                 type: 'GET',
                 url: '/rest/api/2/search?jql=key+in(' + issues.toArray().join(',') + ')&fields=timetracking,customfield_10000,customfield_10910&maxResults=1000',
                 contentType: 'application/json'
             })
             .done(function(data) {
-                var epics = data.issues
-                    .filter(function(issue) {
-                    return issue.fields.customfield_10910;
-                })
-                .map(function(issue) {
-                    return issue.fields.customfield_10910;
-                });
-
-
                 GH.SwimlaneView.AG[swimlaneId].issues = data.issues;
                 JH.fn.renderEstimates(swimlaneId);
-
-                if (epics.length) {
-                    $.ajax({
-                        type: 'GET',
-                        url: '/rest/api/2/search?jql=key+in(' + epics.join(',') + ')&fields=customfield_10911,customfield_10913&maxResults=1000',
-                        contentType: 'application/json'
-                    })
-                    .done(function(data) {
-                        GH.SwimlaneView.AG[swimlaneId].epics = data.issues;
-                        JH.fn.renderEpicInfo(swimlaneId);
-                    });
-                }
             });
             JH.fn.renderBlockers(swimlaneId);
         }
@@ -127,6 +108,14 @@
             $new.removeClass('aui-label-closeable js-epic-remove');
         }
     };
+    JH.fn.addBadgeToIssue = function($badge, $issue) {
+        if ($issue.filter(':not(:has(.bpa-badges))').length == 1) {
+             $('<div style="position:absolute;right:38px;top:6px;" class="bpa-badges"></div>').appendTo($issue);
+        }
+
+        var $badges = $issue.find('.bpa-badges');
+        $badge.appendTo($badges);
+    };
     JH.fn.renderEstimates = function(swimlaneId) {
         var $swimlane = $("#ghx-pool").find('.ghx-swimlane[swimlane-id="' + swimlaneId + '"]'),
             $issues = $swimlane.find('.ghx-issue'),
@@ -138,9 +127,8 @@
             var $issue = $issues.filter('[data-issue-key="' + issue.key + '"]');
             if ($issue.length === 0) return;
 
-            $('<div style="position:absolute;right:38px;top:6px;" class="bpa-badges">' +
-                '<span class="aui-badge" title="Remaining Time Estimate" style="background:#' + (issue.fields.timetracking.remainingEstimate ? 'ccc' : 'eb00e3') + '">' +
-                (issue.fields.timetracking.remainingEstimate || "?") + '</span></div>').appendTo($issue);
+            JH.fn.addBadgeToIssue($('<span class="aui-label" title="Remaining Time Estimate" style="background:#' + (issue.fields.timetracking.remainingEstimate ? 'ccc' : 'eb00e3') + '">' +
+                (issue.fields.timetracking.remainingEstimate || "?") + '</span></div>'), $issue);
 
             if (issue.fields.timetracking.remainingEstimateSeconds) {
                 days = Math.round(issue.fields.timetracking.remainingEstimateSeconds / 7200);
@@ -171,18 +159,14 @@
     };
     JH.fn.renderEpicInfo = function(swimlaneId) {
         var $swimlane = $("#ghx-pool").find('.ghx-swimlane[swimlane-id="' + swimlaneId + '"]'),
-            $issues = $swimlane.find('.ghx-issue');
+            $issues = $swimlane.find('.ghx-issue:has(.ghx-highlighted-fields [data-epickey])');
+        $issues.each(function(_, issue) {
+            var $issue = $(issue), $epic = $issue.find('[data-epickey]');
+            JH.fn.addBadgeToIssue($epic, $issue);
 
-        GH.SwimlaneView.AG[swimlaneId].epics.forEach(function(issue) {
-            var $issue = $issues.filter('[data-epic-key="' + issue.key + '"]');
-
-            $issue.find('.ghx-summary').addClass('aui-label').addClass(issue.fields.customfield_10913).css({
+            $issue.find('.ghx-summary').addClass($epic.prop('class')).css({
                 top: '-2px !important'
             });
-
-            $('<a href="/browse/' + issue.key + '" target="_blank" title="' + issue.key + '" ' +
-                'style="text-transform:none;margin-right:3px;" ' +
-                'class="aui-badge ' + issue.fields.customfield_10913 + '">' + issue.fields.customfield_10911 + '</a>').prependTo($issue.find('.bpa-badges'));
         });
     };
     JH.fn.renderBlockers = function(swimlaneId) {
@@ -381,10 +365,9 @@
 
         JH.GH.boardState = localStorage.getItem('FH.gh.RapidBoard.BPAMode.' + JH.GH.boardId);
 
-        $('#ghx-modes')
-            .append($('<a href="#" class="aui-button js-refresh-now">Refresh</a>').click(GH.RapidBoard.reload))
-            .append($('<a href="#" class="aui-button js-bpa-mode">BPA Mode</a>').click(JH.fn.toggleBpaMode));
-        console.log('JH: BPA mode -', JH.GH.boardState);
+        $('#ghx-view-pluggable .ghx-view-section:last')
+            .append($('<button class="aui-button js-refresh-now">Refresh</button>').click(GH.RapidBoard.reload))
+            .append($('<button class="aui-button js-bpa-mode">BPA Mode</button>').click(JH.fn.toggleBpaMode));
         if ((JH.GH.boardState === null && ['228'].indexOf(JH.GH.boardId) > -1) || JH.GH.boardState === 'true') {
             JH.$body.addClass('BPA-RapidBoard')
         }
