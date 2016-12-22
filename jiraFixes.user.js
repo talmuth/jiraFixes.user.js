@@ -4,7 +4,7 @@
 // @description    Some minor fixes for JIRA
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks-v2
-// @version        0.14.1
+// @version        0.99.1
 // @resource       UI_CSS http://bit.ly/bpa-ag-jira-css-for-usersript
 // @require        https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js
 // @grant          GM_addStyle
