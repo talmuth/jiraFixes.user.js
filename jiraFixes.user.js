@@ -5,7 +5,7 @@
 // @include        https://jira.odesk.com/*
 // @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks-v2
-// @version        0.15.1
+// @version        0.15.2
 // @resource       UI_CSS http://bit.ly/bpa-ag-jira-css-for-usersript
 // @require        https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js
 // @grant          GM_addStyle
@@ -373,7 +373,7 @@
 
         JH.fn.addCustomButtons($('#ghx-view-pluggable .ghx-view-section:last'));
 
-        if ((JH.GH.boardState === null && ['228'].indexOf(JH.GH.boardId) > -1) || JH.GH.boardState === 'true') {
+        if ((JH.GH.boardState === null && ['238', '849'].indexOf(JH.GH.boardId) > -1) || JH.GH.boardState === 'true') {
             JH.$body.addClass('BPA-RapidBoard')
         }
 
