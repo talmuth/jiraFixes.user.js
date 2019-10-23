@@ -57,14 +57,28 @@
 
 .BPA-RapidBoard .ghx-issue {
   padding: 0 !important;
-  overflow: hidden !important;
+}
+
+.BPA-RapidBoard.ghx-issue .ghx-card-footer div:not(:last-child)
+{
+  margin-right: 0 !important;
 }
 
 .BPA-RapidBoard .ghx-issue .ghx-issue-content {
-  min-height: 10px !important;
+  min-height: 36px !important;
 }
 
-.BPA-RapidBoard .ghx-issue, .BPA-RapidBoard .ghx-issue .ghx-grabber {
+.BPA-RapidBoard .ghx-issue:not(:first-child)
+{
+  margin: -8px 5px 0 5px;
+}
+
+.BPA-RapidBoard .ghx-issue:last-child
+{
+  margin-bottom: 5px;
+}
+
+.BPA-RapidBoard .ghx-issue {
   height: 36px !important;
 }
 
@@ -75,6 +89,7 @@
 
 .BPA-RapidBoard .ghx-issue .ghx-days.display-anyway {
   display: block !important;
+  margin-left: -16px !important;
 }
 
 .BPA-RapidBoard .ghx-issue-fields .ghx-summary .ghx-inner {
@@ -83,7 +98,7 @@
 
 .BPA-RapidBoard .ghx-issue-fields {
   position: absolute !important;
-  left: 36px !important;
+  left: 40px !important;
   top: 10px !important;
   width: 100% !important;
 }
@@ -102,11 +117,6 @@
   right: 2px !important;
 }
 
-.BPA-RapidBoard .ghx-issue .ghx-flags {
-  position: absolute !important;
-  top: 10px !important;
-}
-
 .BPA-RapidBoard .ghx-issue .ghx-summary {
   white-space: nowrap !important;
   max-width: 85% !important;
@@ -115,9 +125,19 @@
   left: 8px !important;
 }
 
+.BPA-RapidBoard .ghx-issue .ghx-card-footer {
+  margin: -26px 0 0 4px;
+}
+
 .BPA-RapidBoard .ghx-issue .ghx-summary.aui-label {
   top: -2px !important;
   left: 3px !important;
+}
+
+.BPA-RapidBoard .ghx-issue .bpa-badges {
+  position:absolute;
+  right:38px;
+  top:8px;
 }
 
 .BPA-RapidBoard .ghx-days b {

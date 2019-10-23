@@ -3,9 +3,8 @@
 // @namespace      https://github.com/talmuth/jiraFixes.user.js
 // @description    Some minor fixes for JIRA
 // @include        https://jira.odesk.com/*
-// @include        http://jira.odesk.com/*
 // @updateURL      http://bit.ly/bpa-ag-jira-js-tweaks-v2
-// @version        0.15.2
+// @version        0.15.3
 // @resource       UI_CSS http://bit.ly/bpa-ag-jira-css-for-usersript
 // @require        https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js
 // @grant          GM_addStyle
@@ -33,7 +32,6 @@
         JH.fn.renderBlockers(E);
     };
     GH.SwimlaneView.AG = {};
-
     var JH = {};
     JH.fn = {};
     JH.config = {
@@ -103,14 +101,14 @@
         var $epic = $('.ghx-fieldname-customfield_10911 .js-epic-remove', this)
         if ($epic.length) {
             var issue = $epic.data('epickey');
-            var $new = $('<a href="/browse/' + issue + '" target="_blank" title="' + issue + '" class="' + $epic.prop('class') +  ' ">' + $epic.prop('title') + '</a>');
+            var $new = $('<a href="/browse/' + issue + '" target="_blank" title="' + issue + '" class="' + $epic.prop('class') + ' ">' + $epic.prop('title') + '</a>');
             $epic.replaceWith($new);
             $new.removeClass('aui-label-closeable js-epic-remove');
         }
     };
     JH.fn.addBadgeToIssue = function($badge, $issue) {
         if ($issue.filter(':not(:has(.bpa-badges))').length == 1) {
-             $('<div style="position:absolute;right:38px;top:6px;" class="bpa-badges"></div>').appendTo($issue);
+             $('<div class="bpa-badges"></div>').appendTo($issue);
         }
 
         var $badges = $issue.find('.bpa-badges');
@@ -188,7 +186,7 @@
                     } else {
                         $flags.append('<span class="ghx-priority js-blocked-by-request" title="Blocked by ' + data.total + ' request(s)" />');
                     }
-                }  else {
+                } else {
                     JH.fn.renderBlocks(issue);
                 }
             });
@@ -374,7 +372,7 @@
         JH.fn.addCustomButtons($('#ghx-view-pluggable .ghx-view-section:last'));
 
         if ((JH.GH.boardState === null && ['238', '849'].indexOf(JH.GH.boardId) > -1) || JH.GH.boardState === 'true') {
-            JH.$body.addClass('BPA-RapidBoard')
+            JH.$body.addClass('BPA-RapidBoard');
         }
 
         if (AJS.keys) {
