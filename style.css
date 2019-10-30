@@ -68,9 +68,9 @@
   min-height: 36px !important;
 }
 
-.BPA-RapidBoard .ghx-issue:not(:first-child)
+.BPA-RapidBoard .ghx-issue .ghx-highlighted-fields
 {
-  margin: -8px 5px 0 5px;
+  margin-top: 0;
 }
 
 .BPA-RapidBoard .ghx-issue:last-child
